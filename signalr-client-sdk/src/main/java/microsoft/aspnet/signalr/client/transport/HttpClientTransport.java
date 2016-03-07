@@ -32,7 +32,7 @@ public abstract class HttpClientTransport implements ClientTransport {
     protected boolean mStartedAbort = false;
     protected SignalRFuture<Void> mAbortFuture = null;
 
-    private Logger mLogger;
+    protected Logger mLogger;
 
     /**
      * Initializes the HttpClientTransport with a logger
