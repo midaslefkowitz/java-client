@@ -23,6 +23,7 @@ import microsoft.aspnet.signalr.client.transport.DataResultCallback;
 import microsoft.aspnet.signalr.client.transport.NegotiationResponse;
 import microsoft.aspnet.signalr.client.transport.TransportHelper;
 import microsoft.aspnet.signalr.client.Logger;
+import microsoft.aspnet.signalr.client.transport.WebSocketAdapter;
 
 /**
  * Represents a basic SingalR connection
@@ -260,6 +261,10 @@ public class Connection implements ConnectionBase {
      */
     public SignalRFuture<Void> start() {
         return start(new AutomaticTransport(mLogger));
+    }
+
+    public SignalRFuture<Void> start(WebSocketAdapter socket) {
+        return start(new AutomaticTransport(mLogger, socket));
     }
 
     /**

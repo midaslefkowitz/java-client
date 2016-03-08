@@ -23,11 +23,16 @@ import microsoft.aspnet.signalr.client.http.HttpConnection;
  */
 public class WebsocketTransport extends HttpClientTransport {
 
-    WebSocketAdapter mWebSocketAdapter;
+    WebSocketAdapter mWebSocketAdapter = null;
     private UpdateableCancellableFuture<Void> mConnectionFuture;
 
     public WebsocketTransport(Logger logger) {
         super(logger);
+    }
+
+    public WebsocketTransport(Logger logger, WebSocketAdapter webSocketAdapter) {
+        super(logger);
+        mWebSocketAdapter = webSocketAdapter;
     }
 
     public WebsocketTransport(Logger logger, HttpConnection httpConnection) {
@@ -78,7 +83,9 @@ public class WebsocketTransport extends HttpClientTransport {
             return mConnectionFuture;
         }
 
-        mWebSocketAdapter = new TooTallSocketAdapter(uri, mLogger, getName(),mConnectionFuture, callback);
+        if (mWebSocketAdapter == null) {
+            mWebSocketAdapter = new TooTallSocketAdapter(uri, mLogger, getName(), mConnectionFuture, callback);
+        }
 
         mWebSocketAdapter.connect();
 

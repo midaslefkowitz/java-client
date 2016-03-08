@@ -25,6 +25,7 @@ public class AutomaticTransport extends HttpClientTransport {
 
     private List<ClientTransport> mTransports;
     private ClientTransport mRealTransport;
+    private WebSocketAdapter _webSocketAdapter;
 
     /**
      * Initializes the transport with a NullLogger
@@ -44,6 +45,12 @@ public class AutomaticTransport extends HttpClientTransport {
         initialize(logger);
     }
 
+    public AutomaticTransport(Logger logger, WebSocketAdapter webSocketAdapter) {
+        super(logger);
+        initialize(logger);
+        _webSocketAdapter = webSocketAdapter;
+    }
+
     /**
      * Initializes the transport with a logger and an httpConnection
      * 
@@ -59,7 +66,7 @@ public class AutomaticTransport extends HttpClientTransport {
 
     private void initialize(Logger logger) {
         mTransports = new ArrayList<ClientTransport>();
-        mTransports.add(new WebsocketTransport(logger));
+        mTransports.add(new WebsocketTransport(logger, _webSocketAdapter));
         mTransports.add(new ServerSentEventsTransport(logger));
         mTransports.add(new LongPollingTransport(logger));
     }
