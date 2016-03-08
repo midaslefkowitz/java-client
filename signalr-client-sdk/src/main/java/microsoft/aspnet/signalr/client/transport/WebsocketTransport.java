@@ -84,8 +84,11 @@ public class WebsocketTransport extends HttpClientTransport {
         }
 
         if (mWebSocketAdapter == null) {
-            mWebSocketAdapter = new TooTallSocketAdapter(uri, mLogger, getName(), mConnectionFuture, callback);
+            mWebSocketAdapter = new TooTallSocketAdapter(uri, mLogger, getName());
         }
+
+        mWebSocketAdapter.setCallback(callback);
+        mWebSocketAdapter.setConnectionFuture(mConnectionFuture);
 
         mWebSocketAdapter.connect();
 

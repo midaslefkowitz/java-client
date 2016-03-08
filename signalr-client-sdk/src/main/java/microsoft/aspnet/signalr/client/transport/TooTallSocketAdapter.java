@@ -24,21 +24,19 @@ public class TooTallSocketAdapter extends WebSocketAdapter {
     private Logger _logger;
     private String _name;
     private String _prefix;
-    private UpdateableCancellableFuture<Void> _connectionFuture;
 
-    public TooTallSocketAdapter(URI uri, Logger logger, String name, UpdateableCancellableFuture<Void> connectionFuture, final DataResultCallback callback) {
+    public TooTallSocketAdapter(URI uri, Logger logger, String name) {
         _logger = logger;
         _name = name;
-        _connectionFuture = connectionFuture;
         _tooTallNateSocket = new WebSocketClient(uri) {
             @Override
             public void onOpen(ServerHandshake serverHandshake) {
-                _connectionFuture.setResult(null);
+                TooTallSocketAdapter.this.onOpen();
             }
 
             @Override
             public void onMessage(String s) {
-                callback.onData(s);
+                TooTallSocketAdapter.this.onMessage(s);
             }
 
             @Override
@@ -82,6 +80,14 @@ public class TooTallSocketAdapter extends WebSocketAdapter {
                 }
             }
         };
+    }
+
+    public void onOpen() {
+        _connectionFuture.setResult(null);
+    }
+
+    public void onMessage(String message) {
+        _callback.onData(message);
     }
 
     public void connect() {
