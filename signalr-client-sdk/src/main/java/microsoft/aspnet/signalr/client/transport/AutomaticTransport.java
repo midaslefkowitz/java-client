@@ -47,8 +47,8 @@ public class AutomaticTransport extends HttpClientTransport {
 
     public AutomaticTransport(Logger logger, WebSocketAdapter webSocketAdapter) {
         super(logger);
-        initialize(logger);
         _webSocketAdapter = webSocketAdapter;
+        initialize(logger);
     }
 
     /**
