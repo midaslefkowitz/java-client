@@ -9,6 +9,7 @@ import org.java_websocket.handshake.ServerHandshake;
 import org.java_websocket.util.Charsetfunctions;
 
 import java.net.URI;
+import java.net.URISyntaxException;
 
 import microsoft.aspnet.signalr.client.LogLevel;
 import microsoft.aspnet.signalr.client.Logger;
@@ -25,61 +26,9 @@ public class TooTallSocketAdapter extends WebSocketAdapter {
     private String _name;
     private String _prefix;
 
-    public TooTallSocketAdapter(URI uri, Logger logger, String name) {
+    public TooTallSocketAdapter(Logger logger, String name) {
         _logger = logger;
         _name = name;
-        _tooTallNateSocket = new WebSocketClient(uri) {
-            @Override
-            public void onOpen(ServerHandshake serverHandshake) {
-                TooTallSocketAdapter.this.onOpen();
-            }
-
-            @Override
-            public void onMessage(String s) {
-                TooTallSocketAdapter.this.onMessage(s);
-            }
-
-            @Override
-            public void onClose(int i, String s, boolean b) {
-                _tooTallNateSocket.close();
-            }
-
-            @Override
-            public void onError(Exception e) {
-                _tooTallNateSocket.close();
-            }
-
-            @Override
-            public void onFragment(Framedata frame) {
-                try {
-                    String decodedString = Charsetfunctions.stringUtf8(frame.getPayloadData());
-
-                    if(decodedString.equals("]}")){
-                        return;
-                    }
-
-                    if(decodedString.endsWith(":[") || null == _prefix){
-                        _prefix = decodedString;
-                        return;
-                    }
-
-                    String simpleConcatenate = _prefix + decodedString;
-
-                    if(isJSONValid(simpleConcatenate)){
-                        onMessage(simpleConcatenate);
-                    }else{
-                        String extendedConcatenate = simpleConcatenate + "]}";
-                        if (isJSONValid(extendedConcatenate)) {
-                            onMessage(extendedConcatenate);
-                        } else {
-                            log("invalid json received:" + decodedString, LogLevel.Critical);
-                        }
-                    }
-                } catch (InvalidDataException e) {
-                    e.printStackTrace();
-                }
-            }
-        };
     }
 
     public void onOpen() {
@@ -90,7 +39,71 @@ public class TooTallSocketAdapter extends WebSocketAdapter {
         _callback.onData(message);
     }
 
-    public void connect() {
+    public void connect(String url) {
+
+        URI uri;
+        try {
+            uri = new URI(url);
+        } catch (URISyntaxException e) {
+            e.printStackTrace();
+            _connectionFuture.triggerError(e);
+            return;
+        }
+
+        if (_tooTallNateSocket == null) {
+            _tooTallNateSocket = new WebSocketClient(uri) {
+                @Override
+                public void onOpen(ServerHandshake serverHandshake) {
+                    TooTallSocketAdapter.this.onOpen();
+                }
+
+                @Override
+                public void onMessage(String s) {
+                    TooTallSocketAdapter.this.onMessage(s);
+                }
+
+                @Override
+                public void onClose(int i, String s, boolean b) {
+                    _tooTallNateSocket.close();
+                }
+
+                @Override
+                public void onError(Exception e) {
+                    _tooTallNateSocket.close();
+                }
+
+                @Override
+                public void onFragment(Framedata frame) {
+                    try {
+                        String decodedString = Charsetfunctions.stringUtf8(frame.getPayloadData());
+
+                        if (decodedString.equals("]}")) {
+                            return;
+                        }
+
+                        if (decodedString.endsWith(":[") || null == _prefix) {
+                            _prefix = decodedString;
+                            return;
+                        }
+
+                        String simpleConcatenate = _prefix + decodedString;
+
+                        if (isJSONValid(simpleConcatenate)) {
+                            onMessage(simpleConcatenate);
+                        } else {
+                            String extendedConcatenate = simpleConcatenate + "]}";
+                            if (isJSONValid(extendedConcatenate)) {
+                                onMessage(extendedConcatenate);
+                            } else {
+                                log("invalid json received:" + decodedString, LogLevel.Critical);
+                            }
+                        }
+                    } catch (InvalidDataException e) {
+                        e.printStackTrace();
+                    }
+                }
+            };
+        }
         _tooTallNateSocket.connect();
     }
 
