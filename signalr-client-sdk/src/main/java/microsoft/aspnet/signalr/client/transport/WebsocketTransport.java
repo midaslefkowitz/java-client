@@ -6,11 +6,6 @@ See License.txt in the project root for license information.
 
 package microsoft.aspnet.signalr.client.transport;
 
-import java.io.UnsupportedEncodingException;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.net.URLEncoder;
-
 import microsoft.aspnet.signalr.client.ConnectionBase;
 import microsoft.aspnet.signalr.client.Logger;
 import microsoft.aspnet.signalr.client.SignalRFuture;
@@ -51,46 +46,19 @@ public class WebsocketTransport extends HttpClientTransport {
 
     @Override
     public SignalRFuture<Void> start(ConnectionBase connection, ConnectionType connectionType, final DataResultCallback callback) {
-        final String connectionString = connectionType == ConnectionType.InitialConnection ? "connect" : "reconnect";
-
-        final String transport = getName();
-        final String connectionToken = connection.getConnectionToken();
-        final String messageId = connection.getMessageId() != null ? connection.getMessageId() : "";
-        final String groupsToken = connection.getGroupsToken() != null ? connection.getGroupsToken() : "";
-        final String connectionData = connection.getConnectionData() != null ? connection.getConnectionData() : "";
-
-
-        String url = null;
-        try {
-            url = connection.getUrl() + "signalr/" + connectionString + '?'
-                    + "connectionData=" + URLEncoder.encode(URLEncoder.encode(connectionData, "UTF-8"), "UTF-8")
-                    + "&connectionToken=" + URLEncoder.encode(URLEncoder.encode(connectionToken, "UTF-8"), "UTF-8")
-                    + "&groupsToken=" + URLEncoder.encode(groupsToken, "UTF-8")
-                    + "&messageId=" + URLEncoder.encode(messageId, "UTF-8")
-                    + "&transport=" + URLEncoder.encode(transport, "UTF-8");
-        } catch (UnsupportedEncodingException e) {
-            e.printStackTrace();
-        }
 
         mConnectionFuture = new UpdateableCancellableFuture<Void>(null);
 
-        URI uri;
-        try {
-            uri = new URI(url);
-        } catch (URISyntaxException e) {
-            e.printStackTrace();
-            mConnectionFuture.triggerError(e);
-            return mConnectionFuture;
-        }
-
         if (mWebSocketAdapter == null) {
-            mWebSocketAdapter = new TooTallSocketAdapter(uri, mLogger, getName());
+            mWebSocketAdapter = new TooTallSocketAdapter(mLogger, getName());
         }
 
         mWebSocketAdapter.setCallback(callback);
         mWebSocketAdapter.setConnectionFuture(mConnectionFuture);
 
-        mWebSocketAdapter.connect();
+        String url = mWebSocketAdapter.createURL(connection, connectionType, getName());
+
+        mWebSocketAdapter.connect(url);
 
         connection.closed(new Runnable() {
             @Override
